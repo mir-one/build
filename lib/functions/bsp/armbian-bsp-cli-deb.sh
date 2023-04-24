@@ -30,6 +30,7 @@ function compile_armbian-bsp-cli() {
 
 	# Replaces: base-files is needed to replace /etc/update-motd.d/ files on Xenial
 	# Depends: linux-base is needed for "linux-version" command in initrd cleanup script
+	# Depends: file is needed for /usr/bin/armbian-bootconfig
 	# Depends: fping is needed for armbianmonitor to upload armbian-hardware-monitor.log
 	# Depends: base-files (>= ${REVISION}) is to force usage of our base-files package (not the original Distro's).
 	declare depends_base_files=", base-files (>= ${REVISION})"
@@ -44,7 +45,7 @@ function compile_armbian-bsp-cli() {
 		Installed-Size: 1
 		Section: kernel
 		Priority: optional
-		Depends: bash, linux-base, u-boot-tools, initramfs-tools, lsb-release, fping${depends_base_files}
+		Depends: bash, linux-base, u-boot-tools, initramfs-tools, lsb-release, file, fping${depends_base_files}
 		Suggests: armbian-config
 		Replaces: zram-config, base-files
 		Recommends: bsdutils, parted, util-linux, toilet
@@ -90,6 +91,9 @@ function compile_armbian-bsp-cli() {
 	run_host_command_logged rsync -a "${SRC}"/packages/bsp/common/* "${destination}"
 
 	mkdir -p "${destination}"/usr/share/armbian/
+
+	# Refresh bootconfig
+	postinst_functions+=(board_side_bsp_cli_postinst_update_bootconfig)
 
 	# get bootscript information.
 	declare -A bootscript_info=()
@@ -189,6 +193,10 @@ function compile_armbian-bsp-cli() {
 	done_with_temp_dir "${cleanup_id}" # changes cwd to "${SRC}" and fires the cleanup function early
 
 	display_alert "Done building BSP CLI package" "${destination}" "debug"
+}
+
+function board_side_bsp_cli_postinst_update_bootconfig() {
+	/usr/bin/armbian-bootconfig scan
 }
 
 function get_bootscript_info() {
