@@ -9,11 +9,12 @@ dialog
 debconf-utils
 debsums
 dosfstools
+e2fsprogs
 fake-hwclock
 fdisk
 figlet
 htop
-inetutils-ping
+iputils-ping
 init
 initramfs-tools
 iproute2
@@ -39,6 +40,6 @@ tzdata
 u-boot-tools
 usbutils
 wget
-wireless-tools
 wireguard-tools
+wireless-regdb
 wpasupplicant

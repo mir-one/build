@@ -34,6 +34,12 @@ function cli_docker_run() {
 	# It's gonna be picked up by export_ansi_logs() and included in the final log, if it exists.
 	declare -g GIT_INFO_ANSI
 	GIT_INFO_ANSI="$(prepare_ansi_git_info_log_header)"
+	# GIT_INFO_ANSI can grow to be quite large if there are many changed files.
+	# If it's too big, it will cause "argument list too long" errors when launching docker.
+	# Limit it to 1024 characters, otherwise replace it with a simple message.
+	if [[ ${#GIT_INFO_ANSI} -gt 1024 ]]; then
+		GIT_INFO_ANSI="Armbian: too many git changes to list."
+	fi
 
 	# Same stuff for BUILD_REPOSITORY_URL and BUILD_REPOSITORY_COMMIT.
 	if [[ -d "${SRC}/.git" && "${CONFIG_DEFS_ONLY}" != "yes" ]]; then # don't waste time if only gathering config defs
@@ -74,10 +80,7 @@ function cli_docker_run() {
 	case "${DOCKER_SUBCMD}" in
 		shell)
 			display_alert "Launching Docker shell" "docker-shell" "info"
-			# The MKNOD capability is required for loop device search function.
-			# In case there are no loop devices available, losetup -f would not be able to create a loop
-			# device, yet it will output a loop device path
-			docker run -it --cap-add MKNOD "${DOCKER_ARGS[@]}" "${DOCKER_ARMBIAN_INITIAL_IMAGE_TAG}" /bin/bash
+			docker run -it "${DOCKER_ARGS[@]}" "${DOCKER_ARMBIAN_INITIAL_IMAGE_TAG}" /bin/bash
 			;;
 
 		purge)
